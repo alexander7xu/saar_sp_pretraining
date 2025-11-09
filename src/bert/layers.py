@@ -3,6 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F 
 
+from src.bert.functional import attention, split_heads, merge_heads
+
 class FFN(nn.Module):
     def __init__(self, d_model, d_ffn, bias = False):
         super().__init__()
@@ -21,38 +23,55 @@ class MultiHeadAttention(nn.Module):
         self.softmax = nn.Softmax(dim=-1)
         self.out_proj = nn.Linear(d_model, d_model)
     
+    def forward(self, x):
+        q = split_heads(x, self.n_heads)
+        k = split_heads(x, self.n_heads)
+        v = split_heads(x, self.n_heads)
 
-    @staticmethod 
-    def split_heads(x):
-        # [batch sequence d_model]
-        B, S, D = x.shape
-        d_head = self.d_model // self.n_heads
-        # [batch sequence n_heads d_head] => [batch n_heads sequence d_head]
-        return x.view(B, S, self.n_heads, d_head).transpose(1, 2)
+        attention_weights = attention(q, k, v)
 
-    @staticmethod 
-    def merge_heads(x):
-        B, N, S, Dh = x.shape
-        return x.transpose(1, 2).contiguous().view(B, S, N * Dh) 
- 
-    def attention(self, query, key, value, mask=None):
-        scores = (query @ key.transpose(-2, -1)) / math.sqrt(self.d_model)
+        attention_out = merge_heads(attention_weights)
 
-        if mask is not None:
-            scores.masked_fill_(mask=torch.tensor(False), float('-inf'))
-        
-        attention = self.softmax(scores) @ value 
+        return self.out_proj(attention_out)
+    
 
-        return attention
+class EmbeddingLayer(nn.Module):
+    def __init__(self, vocab_size, d_model):
+        super().__init__()
+        self.d_model = d_model
+        self.embedding_table = nn.Embedding(vocab_size, d_model)
+
+    def forward(self, token_ids):
+        embeddings = self.embedding_table(token_ids)
+        return math.sqrt(self.d_model) * embeddings
+
+class SinusoidalPositionalEncoding(nn.Module):
+    def __init__(self):
+        super().__init__()
+        pass
+
+    def forward(self):
+        pass
+
+
+class EncoderLayer(nn.Module):
+    def __init__(self, d_model, n_heads, d_ffn):
+        super().__init__()
+        self.d_model = d_model
+        self.d_ffn = d_ffn
+        self.n_heads = n_heads
+        self.mha = MultiHeadAttention(d_model, n_heads)
+        self.ffn = FFN(d_model, d_ffn)
     
     def forward(self, x):
-        q = self.merge_heads(x)
-        k = self.merge_heads(x)
-        v = self.merge_heads(x)
-
-        attention_weights = self.attention(q, k, v)
-
-        return self.out_proj(attention_weights)
+        x = F.layer_norm(
+            x + self.mha(x),
+            self.d_model
+        )
+        return F.layer_norm(
+            x + self.ffn(x),
+            self.d_model
+        )
 
 
 
