@@ -2,7 +2,7 @@
 
 BERT implementation for Pretraining LLMs software project at UdS.
 
-![Note]
+> [!Note]
 > This repository is WIP. Stability will be achieved on v1.0.0.
 
 ## Usage
@@ -41,11 +41,11 @@ add w&b link
 
 ## Checklist
 
-[] Model
-[] Dataloader
-[] Data processing
-[] Pretraining
-[] Evaluation
+- [ ] Model
+- [ ] Dataloader
+- [ ] Data processing
+- [ ] Pretraining
+- [ ] Evaluation
 
 ```bibtex
 @inproceedings{devlin-etal-2019-bert,
