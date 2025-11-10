@@ -1,33 +1,53 @@
 import math
 import torch
+from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F 
 
-from src.bert.functional import attention, split_heads, merge_heads
+from .functional import attention, split_heads, merge_heads
 
 class FFN(nn.Module):
-    def __init__(self, d_model, d_ffn, bias = False):
+    def __init__(self, d_model: int, d_ffn: int, bias: bool = False):
         super().__init__()
-        self.fc1 = nn.Linear(in_features=d_model, out_features=d_ffn, bias=True)
-        self.fc2 = nn.Linear(in_features=d_ffn, out_features=d_model, bias=True)
-        self.activation = F.relu()
-    def forward(self, x):
-        return self.fc2(self.activation(self.fc1(x)))
+        self.fc1: nn.Linear = nn.Linear(in_features=d_model, out_features=d_ffn, bias=True)
+        self.fc2: nn.Linear = nn.Linear(in_features=d_ffn, out_features=d_model, bias=True)
+
+    def forward(self, x: Tensor) -> Tensor:
+        """Feed-forward layer with ReLU activation
+
+        Args:
+            x (Tensor): Input Tensor
+
+        Returns:
+            Tensor: Output Tensor
+        """
+        return self.fc2(F.relu(self.fc1(x)))
 
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, d_model, n_heads, log_attention=False):
+    def __init__(self, d_model : int, n_heads : int, log_attention : bool =False):
+        super().__init__()
+        # TODO : add functionality to log attention scores for interp
+
         self.d_model = d_model
         self.n_heads = n_heads
         self.d_heads = self.d_model // self.n_heads
-        self.log_attention = log_attention
+        self.log_attention : bool = log_attention
         self.softmax = nn.Softmax(dim=-1)
-        self.out_proj = nn.Linear(self.d_model, self.d_model)
-        self.Wq = nn.Linear(self.d_heads, self.d_heads)
-        self.Wk = nn.Linear(self.d_heads, self.d_heads)
-        self.Wv = nn.Linear(self.d_heads, self.d_heads)
+        self.out_proj: nn.Linear = nn.Linear(self.d_model, self.d_model)
+        self.Wq : nn.Linear = nn.Linear(self.d_heads, self.d_heads)
+        self.Wk : nn.Linear = nn.Linear(self.d_heads, self.d_heads)
+        self.Wv : nn.Linear= nn.Linear(self.d_heads, self.d_heads)
     
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
+        """Multi-head attention
+
+        Args:
+            x (Tensor): Input Tensor
+
+        Returns:
+            Tensor: OutPut Tensor
+        """
         q = split_heads(self.Wq(x), self.n_heads)
         k = split_heads(self.Wk(x), self.n_heads)
         v = split_heads(self.Wv(x), self.n_heads)
@@ -40,41 +60,75 @@ class MultiHeadAttention(nn.Module):
     
 
 class EmbeddingLayer(nn.Module):
-    def __init__(self, vocab_size, d_model):
+    def __init__(self, vocab_size: int, d_model: int):
         super().__init__()
         self.d_model = d_model
-        self.embedding_table = nn.Embedding(vocab_size, d_model)
+        self.embedding_table: nn.Embedding = nn.Embedding(vocab_size, d_model)
 
-    def forward(self, token_ids):
+    def forward(self, token_ids: Tensor) -> Tensor:
+        """Embedding layer for word embeddings. Does not have positional information.
+        Add Positional embeddings yourself.
+
+        Args:
+            token_ids (Tensor): Tokenized input
+
+        Returns:
+            Tensor: Word embeddings
+        """
         embeddings = self.embedding_table(token_ids)
         return math.sqrt(self.d_model) * embeddings
 
 class SinusoidalPositionalEncoding(nn.Module):
-    def __init__(self, d_model, block_size):
+    def __init__(self, d_model: int, block_size: int):
         super().__init__()
-        
+        position: Tensor = torch.arange(block_size).unsqueeze(1)
+        div_terms: Tensor = torch.exp(
+            torch.arange(0, d_model, 2) * (-torch.log(torch.tensor(10000.0)) / d_model)
+        )
+        self.pe: Tensor = torch.zeros(block_size, d_model)
+        self.pe[:,0::2] = torch.sin(position * div_terms)
+        self.pe[:,1::2] = torch.cos(position * div_terms)
 
-    def forward(self):
-        pass
+        self.register_buffer("pe", self.pe)
+
+
+    def forward(self, x: Tensor) -> Tensor:
+        """Generate Sinosoidal Positional Embeddings
+
+        Args:
+            x (Tensor): Word Embedding
+
+        Returns:
+            Tensor: Word embedding + positional information
+        """
+        return x + self.pe[:x.size(1), :]
 
 
 class EncoderLayer(nn.Module):
-    def __init__(self, d_model, n_heads, d_ffn):
+    def __init__(self, d_model: int, n_heads: int, d_ffn: int):
         super().__init__()
         self.d_model = d_model
         self.d_ffn = d_ffn
         self.n_heads = n_heads
-        self.mha = MultiHeadAttention(d_model, n_heads)
-        self.ffn = FFN(d_model, d_ffn)
+        self.ln1: nn.LayerNorm = nn.LayerNorm(self.d_model)
+        self.ln2: nn.LayerNorm = nn.LayerNorm(self.d_model)
+        self.mha: MultiHeadAttention = MultiHeadAttention(self.d_model, self.n_heads)
+        self.ffn: FFN = FFN(self.d_model, self.d_ffn)
     
-    def forward(self, x):
-        x = F.layer_norm(
-            x + self.mha(x),
-            self.d_model
+    def forward(self, x: Tensor) -> Tensor:
+        """Encoder layer / block for encoder models
+
+        Args:
+            x (Tensor): Tensor Input
+
+        Returns:
+            Tensor: Tensor Output
+        """
+        x = self.ln1(
+            x + self.mha(x)
         )
-        return F.layer_norm(
-            x + self.ffn(x),
-            self.d_model
+        return self.ln2(
+            x + self.ffn(x)
         )
 
 
