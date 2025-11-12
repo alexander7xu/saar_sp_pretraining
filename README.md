@@ -41,7 +41,7 @@ add w&b link
 
 ## Checklist
 
-- [ ] Model
+- [X] Model
 - [ ] Dataloader
 - [ ] Data processing
 - [ ] Pretraining
