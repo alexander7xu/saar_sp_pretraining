@@ -15,6 +15,7 @@ dependencies = [
     "torchvision>=0.24.0",
     "tqdm>=4.66.5",
     "transformers>=4.57.1",
+    "wandb>=0.23.0",
 ]
 
 [build-system]
@@ -22,6 +23,7 @@ requires = ["uv_build>=0.9.8,<0.10.0"]
 build-backend = "uv_build"
 
 [tool.uv.sources]
+bert = { path = "src" }
 torch = { index = "pytorch-cpu" }
 torchvision = { index = "pytorch-cpu" }
 torchaudio = { index = "pytorch-cpu" }
