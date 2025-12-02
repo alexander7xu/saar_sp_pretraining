@@ -17,8 +17,8 @@ uv run scripts/train.py \
     --block_size=128 \
     --d_model=256 \
     --d_ffn=512 \
-    --n_heads=4 \
-    --n_layer=6 \
+    --n_heads=8 \
+    --n_layer=8 \
     --dropout=0.0 \
     --vocab_size=50265 \
     --lr=5e-5 \
@@ -29,4 +29,5 @@ uv run scripts/train.py \
     --model_compile=True \
     --device="cpu" \
     --grad_accumulation_steps=4 \
-    --precision="fp32"
+    --precision="fp32" \
+    --tracking=True
