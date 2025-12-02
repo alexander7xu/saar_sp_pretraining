@@ -28,4 +28,5 @@ uv run scripts/train.py \
     --wandb_project_name="BERT Pretraining GPU Test" \
     --model_compile=True \
     --device="cpu" \
-    --grad_accumulation_steps=4
+    --grad_accumulation_steps=4 \
+    --precision="fp32"
