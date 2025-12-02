@@ -28,6 +28,7 @@ parser.add_argument('--model_compile', type=bool)
 parser.add_argument('--device', type=str)
 parser.add_argument('--grad_accumulation_steps', type=int)
 parser.add_argument('--precision', type=str)
+parser.add_argument('--tracking', type=str)
 
 args = parser.parse_args()
 
@@ -67,6 +68,7 @@ trainer = Trainer(
     compile=args.model_compile,
     device=args.device,
     precision=args.precision,
+    tracking=args.tracking
 )
 
 trainer.train(
