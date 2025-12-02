@@ -176,19 +176,21 @@ class Trainer:
                     with torch.amp.autocast(device_type=self.device, dtype=self.precision):
                         loss = self._common_step(batch)
                         loss_scaled = loss / grad_accumulation_steps
-                        scaler.scale(loss_scaled).backward()
+                    
+                    scaler.scale(loss_scaled).backward()
 
-                        if ((idx + 1) % grad_accumulation_steps == 0) or (idx + 1 == len(train_dataloader)):
-                            torch.nn.utils.clip_grad_norm_(
-                                self.model.parameters(),
-                                max_norm=grad_clip_max_norm
-                            )
+                    if ((idx + 1) % grad_accumulation_steps == 0) or (idx + 1 == len(train_dataloader)):
+                        torch.nn.utils.clip_grad_norm_(
+                            self.model.parameters(),
+                            max_norm=grad_clip_max_norm
+                        )
                             
-                            scaler.step(self.optimizer)
-                            self.optimizer.zero_grad(set_to_none=True)
-                            if self.scheduler:
-                                self.scheduler.step()
+                        scaler.step(self.optimizer)
                         scaler.update()
+                        self.optimizer.zero_grad(set_to_none=True)
+                        if self.scheduler:
+                            self.scheduler.step()
+                        
                         
                 loss = self._common_step(batch)
                 loss_scaled = loss / grad_accumulation_steps
