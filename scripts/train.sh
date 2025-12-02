@@ -3,7 +3,7 @@
 uv run scripts/train.py \
     --model="FacebookAI/roberta-base" \
     --memmap_path='data' \
-    --batch_size=1 \
+    --batch_size=2 \
     --block_size=128 \
     --d_model=256 \
     --d_ffn=512 \
@@ -18,4 +18,5 @@ uv run scripts/train.py \
     --wandb_project_name="BERT Pretraining GPU Test" \
     --model_compile=True \
     --device="cpu" \
-    --grad_accumulation_steps=4
+    --grad_accumulation_steps=4 \
+    --precision='fp32'

@@ -27,6 +27,7 @@ parser.add_argument('--wandb_project_name', type=str)
 parser.add_argument('--model_compile', type=bool)
 parser.add_argument('--device', type=str)
 parser.add_argument('--grad_accumulation_steps', type=int)
+parser.add_argument('--precision', type=str)
 
 args = parser.parse_args()
 
@@ -64,7 +65,8 @@ trainer = Trainer(
     wandb_entity=args.wandb_entity,
     wandb_project_name=args.wandb_project_name,
     compile=args.model_compile,
-    device=args.device
+    device=args.device,
+    precision=args.precision,
 )
 
 trainer.train(
