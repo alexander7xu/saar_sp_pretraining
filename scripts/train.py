@@ -8,7 +8,6 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from transformers import DataCollatorForLanguageModeling, AutoTokenizer
 
-
 def main(args) -> None:
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     collate_fn = DataCollatorForLanguageModeling(
