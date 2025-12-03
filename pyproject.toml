@@ -1,6 +1,6 @@
 [project]
 name = "bert"
-version = "0.1.0"
+version = "1.0.0"
 description = "BERT pretraining in PyTorch"
 readme = "README.md"
 authors = [
