@@ -10,6 +10,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--output_memmap_path", type=str)
 parser.add_argument("--dataset", type=str)
 parser.add_argument("--subset", type=str, default=None)
+parser.add_argument("--split", type=float)
 # parser.add_argument("--dataset_split", "-s", type=str, default="train[:10]")
 parser.add_argument(
     "--dataset_columns", "-c", type=str, default=["text"]
@@ -81,15 +82,14 @@ def make_memmap_dataset(args: argparse.Namespace) -> None:
     print(f"using {args.tokenizer} on {args.dataset} subset {args.subset} column {args.dataset_columns}")
     dataset = load_dataset(args.dataset, subset)
 
-    if len(dataset.keys())<2 and 'train' in dataset.keys():
-        split_dataset = dataset['train'].train_test_split(test_size=args.val_ratio, seed=1337)
-        split_dataset['validation'] = split_dataset.pop('test')
-        memmap_dataset(
-            args.output_memmap_path, tokenizer, split_dataset, args.dataset_columns, args.num_proc
-        )
-    else:
-        memmap_dataset(
-        args.output_memmap_path, tokenizer, dataset, args.dataset_columns, args.num_proc
-        )
+    data = dataset['train'].select(range(int(args.split * len(dataset["train"]))))
+
+
+    split_dataset = dataset['train'].train_test_split(test_size=args.val_ratio, seed=1337)
+    split_dataset['validation'] = split_dataset.pop('test')
+    memmap_dataset(
+        args.output_memmap_path, tokenizer, split_dataset, args.dataset_columns, args.num_proc
+    )
+    
 
 make_memmap_dataset(args=args)

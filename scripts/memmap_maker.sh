@@ -4,6 +4,7 @@ uv run python scripts/memmap_maker.py \
     --output_memmap_path='test_data' \
     --dataset="radm/tathagata" \
     --subset=None \
+    --split=0.2 \
     --dataset_columns="text" \
     --val_ratio=0.1 \
     --batch_size=8 \
