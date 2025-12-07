@@ -84,8 +84,7 @@ def make_memmap_dataset(args: argparse.Namespace) -> None:
 
     data = dataset['train'].select(range(int(args.split * len(dataset["train"]))))
 
-
-    split_dataset = dataset['train'].train_test_split(test_size=args.val_ratio, seed=1337)
+    split_dataset = data.train_test_split(test_size=args.val_ratio, seed=1337)
     split_dataset['validation'] = split_dataset.pop('test')
     memmap_dataset(
         args.output_memmap_path, tokenizer, split_dataset, args.dataset_columns, args.num_proc
