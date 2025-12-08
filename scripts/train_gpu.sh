@@ -12,7 +12,7 @@ export CUDA_VISIBLE_DEVICES=$GPU_ID
 
 uv run scripts/train.py \
     --model="FacebookAI/roberta-base" \
-    --memmap_path='data' \
+    --memmap_path='test_data' \
     --batch_size=1 \
     --block_size=128 \
     --d_model=256 \

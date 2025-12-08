@@ -122,7 +122,11 @@ class Trainer:
         total_loss = 0.0
         with torch.no_grad():
             for batch in val_dataloader:
-                loss = self._common_step(batch)
+                if self.precision != torch.float32:
+                    with torch.amp.autocast(device_type=self.device, dtype=self.precision):
+                        loss = self._common_step(batch)
+                else:
+                    loss = self._common_step(batch)
                 total_loss += loss.item()
 
         return total_loss / len(val_dataloader)
@@ -132,9 +136,9 @@ class Trainer:
             self, 
             train_dataloader: torch.utils.data.DataLoader, 
             val_dataloader: torch.utils.data.DataLoader | None,
-            num_epochs: int = 1,
-            eval_every: int = 5000,
-            save_every: int = 5000,
+            num_epochs: int | None = 1,
+            eval_every: int | None = 5000,
+            save_every: int | None = 5000,
             grad_accumulation_steps: int = 1,
             grad_clip_max_norm: float = 1.0
     ) -> None:
@@ -190,23 +194,22 @@ class Trainer:
                         self.optimizer.zero_grad(set_to_none=True)
                         if self.scheduler:
                             self.scheduler.step()
-                        
-                        
-                loss = self._common_step(batch)
-                loss_scaled = loss / grad_accumulation_steps
-                loss_scaled.backward()
-                
-
-                if ((idx + 1) % grad_accumulation_steps == 0) or (idx + 1 == len(train_dataloader)):
-                    torch.nn.utils.clip_grad_norm_(
-                        self.model.parameters(),
-                        max_norm=grad_clip_max_norm
-                    )
+                else:
+                    loss = self._common_step(batch)
+                    loss_scaled = loss / grad_accumulation_steps
+                    loss_scaled.backward()
                     
-                    self.optimizer.step()
-                    self.optimizer.zero_grad(set_to_none=True)
-                    if self.scheduler:
-                        self.scheduler.step()
+
+                    if ((idx + 1) % grad_accumulation_steps == 0) or (idx + 1 == len(train_dataloader)):
+                        torch.nn.utils.clip_grad_norm_(
+                            self.model.parameters(),
+                            max_norm=grad_clip_max_norm
+                        )
+                        
+                        self.optimizer.step()
+                        self.optimizer.zero_grad(set_to_none=True)
+                        if self.scheduler:
+                            self.scheduler.step()
 
                 self.global_step += 1
                 epoch_steps += 1
