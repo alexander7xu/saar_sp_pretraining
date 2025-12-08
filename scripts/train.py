@@ -51,6 +51,9 @@ def main(args) -> None:
     trainer.train(
         train_dataloader=train_dl,
         val_dataloader=valid_dl,
+        num_epochs=args.num_epochs,
+        eval_every=args.eval_every,
+        save_every=args.save_every,
         grad_accumulation_steps=args.grad_accumulation_steps
     )
 
@@ -68,6 +71,9 @@ if __name__=="__main__":
     parser.add_argument('--dropout', help="DROPOUT",type=float)
     parser.add_argument('--vocab_size', help="VOCAB_SIZE", type=int)
     parser.add_argument('--lr', help="LEARNING_RATE", type=float)
+    parser.add_argument('--num_epochs', help="NUMBER OF EPOCHS", type=int)
+    parser.add_argument('--eval_every', help="RUN EVAL AFTER EVERY n STEPS", type=int)
+    parser.add_argument('--save_every', help="CHECKPOINT AFTER EVERY n STEPS", type=int)
     parser.add_argument('--checkpoint_dir', help="CHECKPOINT_DIR", type=str)
     parser.add_argument('--log_file', help="TRAINING LOGFILE PATH", type=str)
     parser.add_argument('--tracking', help="USE WANDB TO TRACK EXPERIMENTS?", type=str)
