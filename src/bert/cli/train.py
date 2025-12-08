@@ -21,6 +21,9 @@ def main() -> None:
     parser.add_argument('--dropout', help="DROPOUT",type=float)
     parser.add_argument('--vocab_size', help="VOCAB_SIZE", type=int)
     parser.add_argument('--lr', help="LEARNING_RATE", type=float)
+    parser.add_argument('--num_epochs', help="NUMBER OF EPOCHS", type=int)
+    parser.add_argument('--eval_every', help="RUN EVAL AFTER EVERY n STEPS", type=int)
+    parser.add_argument('--save_every', help="CHECKPOINT AFTER EVERY n STEPS", type=int)
     parser.add_argument('--checkpoint_dir', help="CHECKPOINT_DIR", type=str)
     parser.add_argument('--log_file', help="TRAINING LOGFILE PATH", type=str)
     parser.add_argument('--tracking', help="USE WANDB TO TRACK EXPERIMENTS?", type=str)
@@ -31,6 +34,7 @@ def main() -> None:
     parser.add_argument('--precision', help="TRAINING PRECISION: mixed-16, bf16 or fp32", type=str)
     parser.add_argument('--grad_accumulation_steps', help="GRAD ACCUMULATION STEPS", type=int)
     parser.add_argument('--num_tokens', help="NO. OF TOKENS TO TRAIN MODEL ON",type=int)
+
 
     args = parser.parse_args()
 
@@ -76,6 +80,9 @@ def main() -> None:
     trainer.train(
         train_dataloader=train_dl,
         val_dataloader=valid_dl,
+        num_epochs=args.num_epochs,
+        eval_every=args.eval_every,
+        save_every=args.save_every,
         grad_accumulation_steps=args.grad_accumulation_steps
     )
 
